@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Product Matcher</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header h1 {
+            color: #b0b7b1;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #000000, #000000);
+            -webkit-background-clip: text;
+        }
+        
+        .upload-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .upload-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .upload-box {
+            border: 3px dashed #2c5530;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(44, 85, 48, 0.05);
+        }
+        
+        .upload-box:hover {
+            background: rgba(44, 85, 48, 0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(44, 85, 48, 0.2);
+        }
+        
+        .upload-box.drag-over {
+            background: rgba(44, 85, 48, 0.2);
+            border-color: #4a7c59;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #2c5530;
+        }
+        
+        .url-input-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .url-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .url-input:focus {
+            outline: none;
+            border-color: #2c5530;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #2c5530, #4a7c59);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(44, 85, 48, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(44, 85, 48, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #6c757d, #868e96);
+        }
+        
+        .preview-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        .preview-image {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            margin: 0 auto;
+            display: none;
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        .product-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+        
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            transition: transform 0.3s ease;
+        }
+        
+        .product-card:hover .product-image {
+            transform: scale(1.05);
+        }
+        
+        .similarity-badge {
+            background: linear-gradient(45deg, #2c5530, #4a7c59);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 10px;
+            box-shadow: 0 3px 10px rgba(44, 85, 48, 0.3);
+        }
+        
+        .product-card h3 {
+            color: #2c5530;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+            line-height: 1.4;
+        }
+        
+        .product-category {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .product-price {
+            color: #2c5530;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .product-description {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+        
+        .match-reasons {
+            background: rgba(44, 85, 48, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #2c5530;
+        }
+        
+        .match-reason {
+            margin-bottom: 5px;
+            padding-left: 10px;
+            border-left: 3px solid #4a7c59;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #2c5530;
+            font-size: 1.1rem;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2c5530;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #dc3545;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: 600;
+        }
+        
+        .status.connected {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border-left: 5px solid #28a745;
+        }
+        
+        .status.disconnected {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border-left: 5px solid #dc3545;
+        }
+        
+        .filters {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .filter-group label {
+            font-weight: 600;
+            color: #2c5530;
+        }
+        
+        .filter-group select {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            transition: border-color 0.3s ease;
+        }
+        
+        .filter-group select:focus {
+            outline: none;
+            border-color: #2c5530;
+        }
+        
+        .results-info {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .analysis-results {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .analysis-section {
+            margin-bottom: 15px;
+        }
+        
+        .analysis-section h4 {
+            color: #2c5530;
+            margin-bottom: 10px;
+        }
+        
+        .analysis-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .analysis-tag {
+            background: rgba(44, 85, 48, 0.1);
+            color: #2c5530;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            border: 1px solid rgba(44, 85, 48, 0.2);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .upload-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .filter-group {
+                min-width: auto;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Visual Product Matcher</h1>
+            <p style="color: #666; font-size: 1.1rem; margin-bottom: 15px;">
+                Upload an image or enter URL to find visually similar products
+            </p>
+            <div id="apiStatus" class="status">🔍 Checking API Connection...</div>
+        </div>
+
+        <div class="upload-section">
+            <h2 style="color: #2c5530; margin-bottom: 20px; text-align: center;">Upload Your Product Image</h2>
+            
+            <div class="upload-options">
+                <!-- Drag & Drop Upload -->
+                <div class="upload-box" id="dropZone">
+                    <div class="upload-icon">📁</div>
+                    <h3 style="color: #2c5530; margin-bottom: 10px;">Drag & Drop</h3>
+                    <p style="color: #666; margin-bottom: 15px;">Drag your image here or click to browse</p>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                    <button class="btn" onclick="document.getElementById('fileInput').click()">
+                        Browse Files
+                    </button>
+                </div>
+
+                <!-- URL Upload -->
+                <div class="upload-box">
+                    <div class="upload-icon">🔗</div>
+                    <h3 style="color: #2c5530; margin-bottom: 10px;">Image URL</h3>
+                    <p style="color: #666; margin-bottom: 15px;">Enter image URL from the web</p>
+                    <div class="url-input-container">
+                        <input type="url" id="urlInput" class="url-input" placeholder="https://example.com/image.jpg">
+                        <button class="btn" onclick="searchWithUrl()">Use URL</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-section">
+                <img id="previewImage" class="preview-image" alt="Preview">
+            </div>
+
+            <div style="text-align: center; margin-top: 25px;">
+                <button class="btn" onclick="searchWithCurrentImage()" style="margin-right: 10px;">
+                    🔍 Search Similar Products
+                </button>
+                <button class="btn btn-secondary" onclick="loadAllProducts()">
+                    📦 Show All Products
+                </button>
+            </div>
+        </div>
+
+        <div class="analysis-results" id="analysisResults" style="display: none;">
+            <h3 style="color: #2c5530; margin-bottom: 20px;">📊 Image Analysis Results</h3>
+            <div id="analysisContent"></div>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label>📁 Category Filter:</label>
+                <select id="categoryFilter" onchange="filterProducts()">
+                    <option value="all">All Categories</option>
+                    <option value="electronics">Electronics</option>
+                    <option value="footwear">Footwear</option>
+                    <option value="clothing">Clothing</option>
+                    <option value="home">Home & Kitchen</option>
+                    <option value="sports">Sports & Fitness</option>
+                    <option value="accessories">Accessories</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>🎯 Minimum Similarity:</label>
+                <select id="similarityFilter" onchange="filterProducts()">
+                    <option value="0">Any Match</option>
+                    <option value="30">30%+</option>
+                    <option value="50">50%+</option>
+                    <option value="70">70%+</option>
+                    <option value="80">80%+</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>🔢 Sort By:</label>
+                <select id="sortFilter" onchange="sortProducts()">
+                    <option value="similarity">Similarity (High to Low)</option>
+                    <option value="price-low">Price (Low to High)</option>
+                    <option value="price-high">Price (High to Low)</option>
+                    <option value="name">Product Name</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="resultsInfo" class="results-info" style="display: none;"></div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Analyzing your image and finding similar products...</p>
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="productsContainer" class="products-grid"></div>
+    </div>
+
+    <script>
+        let allProducts = [];
+        let currentImageData = null;
+
+        // Initialize drag and drop
+        function initializeDragDrop() {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+
+            // Drag over event
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('drag-over');
+            });
+
+            // Drag leave event
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('drag-over');
+            });
+
+            // Drop event
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].type.startsWith('image/')) {
+                    handleFileSelect(files[0]);
+                } else {
+                    showError('Please drop a valid image file');
+                }
+            });
+
+            // File input change
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
+
+            // Click on drop zone
+            dropZone.addEventListener('click', () => {
+                fileInput.click();
+            });
+        }
+
+        // Handle file selection
+        function handleFileSelect(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('Please select a valid image file (JPEG, PNG, etc.)');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentImageData = {
+                    type: 'file',
+                    file: file,
+                    preview: e.target.result
+                };
+                showPreview(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Show image preview
+        function showPreview(imageSrc) {
+            const preview = document.getElementById('previewImage');
+            preview.src = imageSrc;
+            preview.style.display = 'block';
+            hideError();
+        }
+
+        // Search with uploaded image
+        async function searchWithCurrentImage() {
+            if (!currentImageData) {
+                showError('Please upload an image or enter a URL first');
+                return;
+            }
+
+            showLoading();
+            hideError();
+
+            try {
+                let response;
+                
+                if (currentImageData.type === 'file') {
+                    const formData = new FormData();
+                    formData.append('image', currentImageData.file);
+
+                    response = await fetch('http://localhost:5000/api/search', {
+                        method: 'POST',
+                        body: formData
+                    });
+                } else {
+                    // For URL, we'd need to handle it differently
+                    showError('URL search not implemented in this version');
+                    hideLoading();
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    allProducts = data.data;
+                    displayProducts(allProducts);
+                    showAnalysisResults(data.analysis);
+                    showResultsInfo(`Found ${data.total} similar products`);
+                } else {
+                    throw new Error(data.message || 'Search failed');
+                }
+                
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                showError('Search failed: ' + error.message);
+            }
+        }
+
+        // Search with URL
+        async function searchWithUrl() {
+            const urlInput = document.getElementById('urlInput');
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                showError('Please enter an image URL');
+                return;
+            }
+
+            // Validate URL
+            try {
+                new URL(url);
+            } catch {
+                showError('Please enter a valid URL');
+                return;
+            }
+
+            showLoading();
+            hideError();
+
+            try {
+                // First, fetch the image from URL
+                const imageResponse = await fetch(url);
+                const blob = await imageResponse.blob();
+                
+                const formData = new FormData();
+                formData.append('image', blob, 'image.jpg');
+
+                const response = await fetch('http://localhost:5000/api/search', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentImageData = {
+                        type: 'url',
+                        url: url,
+                        preview: url
+                    };
+                    showPreview(url);
+                    allProducts = data.data;
+                    displayProducts(allProducts);
+                    showAnalysisResults(data.analysis);
+                    showResultsInfo(`Found ${data.total} similar products`);
+                } else {
+                    throw new Error(data.message || 'Search failed');
+                }
+                
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                showError('URL search failed: ' + error.message);
+            }
+        }
+
+        // Load all products
+        async function loadAllProducts() {
+            try {
+                showLoading();
+                const response = await fetch('http://localhost:5000/api/products');
+                const data = await response.json();
+                
+                if (data.success) {
+                    allProducts = data.data.map(product => ({
+                        ...product,
+                        similarity: 0.1 // Default low similarity for all products view
+                    }));
+                    displayProducts(allProducts);
+                    hideAnalysisResults();
+                    showResultsInfo(`Showing all ${data.total} products`);
+                }
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                showError('Failed to load products: ' + error.message);
+            }
+        }
+
+        // Filter products
+        function filterProducts() {
+            const category = document.getElementById('categoryFilter').value;
+            const minSimilarity = parseInt(document.getElementById('similarityFilter').value) / 100;
+
+            let filtered = allProducts.filter(product => 
+                product.similarity >= minSimilarity
+            );
+
+            if (category !== 'all') {
+                filtered = filtered.filter(product => 
+                    product.category.toLowerCase() === category.toLowerCase()
+                );
+            }
+
+            displayProducts(filtered);
+        }
+
+        // Sort products
+        function sortProducts() {
+            const sortBy = document.getElementById('sortFilter').value;
+            let sorted = [...allProducts];
+
+            switch (sortBy) {
+                case 'price-low':
+                    sorted.sort((a, b) => a.price - b.price);
+                    break;
+                case 'price-high':
+                    sorted.sort((a, b) => b.price - a.price);
+                    break;
+                case 'name':
+                    sorted.sort((a, b) => a.name.localeCompare(b.name));
+                    break;
+                case 'similarity':
+                default:
+                    sorted.sort((a, b) => b.similarity - a.similarity);
+                    break;
+            }
+
+            displayProducts(sorted);
+        }
+
+        // Display products
+        function displayProducts(products) {
+            const container = document.getElementById('productsContainer');
+            
+            if (products.length === 0) {
+                container.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;">
+                        <div style="font-size: 3rem; margin-bottom: 20px;">🔍</div>
+                        <h3>No products found</h3>
+                        <p>Try adjusting your filters or upload a different image</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = products.map(product => `
+                <div class="product-card">
+                    <img src="${product.imageUrl}" alt="${product.name}" class="product-image" 
+                         onerror="this.src='https://via.placeholder.com/300x200?text=Image+Not+Found'">
+                    <div class="similarity-badge">
+                        ${Math.round(product.similarity * 100)}% Match
+                    </div>
+                    <h3>${product.name}</h3>
+                    <div class="product-category">${product.category}</div>
+                    <div class="product-price">$${product.price}</div>
+                    <div class="product-description">${product.description}</div>
+                    ${product.matchReasons && product.matchReasons.length > 0 ? `
+                        <div class="match-reasons">
+                            <strong>Match Reasons:</strong>
+                            ${product.matchReasons.map(reason => 
+                                `<div class="match-reason">${reason}</div>`
+                            ).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Show analysis results
+        function showAnalysisResults(analysis) {
+            const analysisDiv = document.getElementById('analysisResults');
+            const contentDiv = document.getElementById('analysisContent');
+            
+            if (analysis && analysis.detectedLabels) {
+                contentDiv.innerHTML = `
+                    <div class="analysis-section">
+                        <h4>🏷️ Detected Labels</h4>
+                        <div class="analysis-tags">
+                            ${analysis.detectedLabels.slice(0, 8).map(label => 
+                                `<span class="analysis-tag">${label.description} (${label.confidence}%)</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    ${analysis.detectedObjects && analysis.detectedObjects.length > 0 ? `
+                    <div class="analysis-section">
+                        <h4>📦 Detected Objects</h4>
+                        <div class="analysis-tags">
+                            ${analysis.detectedObjects.slice(0, 5).map(obj => 
+                                `<span class="analysis-tag">${obj.name} (${obj.confidence}%)</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${analysis.dominantColors && analysis.dominantColors.length > 0 ? `
+                    <div class="analysis-section">
+                        <h4>🎨 Dominant Colors</h4>
+                        <div class="analysis-tags">
+                            ${analysis.dominantColors.slice(0, 3).map(color => 
+                                `<span class="analysis-tag" style="background: ${color.hex}; color: white;">${color.hex}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                `;
+                analysisDiv.style.display = 'block';
+            }
+        }
+
+        // Hide analysis results
+        function hideAnalysisResults() {
+            document.getElementById('analysisResults').style.display = 'none';
+        }
+
+        // Show results info
+        function showResultsInfo(message) {
+            const infoDiv = document.getElementById('resultsInfo');
+            infoDiv.innerHTML = `<h3 style="color: #2c5530; margin: 0;">${message}</h3>`;
+            infoDiv.style.display = 'block';
+        }
+
+        // Check API connection
+        async function checkApiStatus() {
+            try {
+                const response = await fetch('http://localhost:5000/api/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('apiStatus').className = 'status connected';
+                    document.getElementById('apiStatus').innerHTML = 
+                        `✅ API Connected | ${data.products} Products | Enhanced Analysis`;
+                }
+            } catch (error) {
+                document.getElementById('apiStatus').className = 'status disconnected';
+                document.getElementById('apiStatus').textContent = '❌ API Disconnected - Please start the server';
+            }
+        }
+
+        // Utility functions
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.innerHTML = `<strong>Error:</strong> ${message}`;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeDragDrop();
+            checkApiStatus();
+            loadAllProducts();
+        });
+    </script>
+</body>
+</html>

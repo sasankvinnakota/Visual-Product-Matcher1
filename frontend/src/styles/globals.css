@@ -1,0 +1,48 @@
+/* Add to existing globals.css */
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.api-status {
+  font-size: 0.8rem;
+}
+
+.status-indicator {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.status-indicator.connected {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-indicator.disconnected {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-indicator.checking {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.api-warning {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  padding: 1rem;
+  margin: 1rem 2rem;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.api-warning code {
+  background: #f8f9fa;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: monospace;
+}

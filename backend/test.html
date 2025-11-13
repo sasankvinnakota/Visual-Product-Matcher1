@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Product Matcher Test</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        .product { border: 1px solid #ddd; padding: 15px; margin: 10px; display: inline-block; width: 250px; }
+        .product img { width: 100%; height: 200px; object-fit: cover; }
+        .similarity { background: green; color: white; padding: 5px; margin: 5px 0; }
+        button { padding: 10px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Product Matcher Test</h1>
+    
+    <input type="file" id="imageInput" accept="image/*">
+    <button onclick="search()">Search Similar Products</button>
+    <button onclick="loadProducts()">Show All Products</button>
+    
+    <div id="status"></div>
+    <div id="products"></div>
+
+    <script>
+        async function search() {
+            const file = document.getElementById('imageInput').files[0];
+            if (!file) return alert('Select an image');
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/search', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                displayProducts(data.data, data.analysis);
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function loadProducts() {
+            const response = await fetch('http://localhost:5000/api/products');
+            const data = await response.json();
+            displayProducts(data.data);
+        }
+
+        function displayProducts(products, analysis) {
+            const container = document.getElementById('products');
+            let status = document.getElementById('status');
+            
+            if (analysis) {
+                status.innerHTML = `<h3>Analysis Results:</h3>
+                    <p><strong>Labels:</strong> ${analysis.detectedLabels.map(l => l.description).join(', ')}</p>
+                    <p><strong>Source:</strong> ${analysis.source} | Google Vision: ${analysis.googleVisionEnabled}</p>`;
+            }
+            
+            container.innerHTML = products.map(p => `
+                <div class="product">
+                    <img src="${p.imageUrl}" alt="${p.name}">
+                    <div class="similarity">${Math.round(p.similarity * 100)}% Match</div>
+                    <h3>${p.name}</h3>
+                    <p>$${p.price} • ${p.category}</p>
+                    <small>${p.matchReasons?.join('<br>') || ''}</small>
+                </div>
+            `).join('');
+        }
+
+        loadProducts();
+    </script>
+</body>
+</html>

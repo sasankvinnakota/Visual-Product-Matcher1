@@ -1,0 +1,43 @@
+# Create .gitignore with these contents
+cat > .gitignore << EOF
+# Secret files
+*.json
+*.key
+*.pem
+*.env
+config.json
+credentials.json
+service-account*.json
+agile-vortex*.json
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Uploads
+uploads/
+temp/
+EOF
+.vercel

@@ -1,0 +1,13 @@
+services:
+  - name: visual-product-backend
+    type: web
+    rootDirectory: backend
+    env: node
+    buildCommand: "npm install"
+    startCommand: "npm start"
+
+  - name: visual-product-frontend
+    type: static
+    rootDirectory: frontend
+    buildCommand: "npm install && npm run build"
+    publishPath: "dist"
